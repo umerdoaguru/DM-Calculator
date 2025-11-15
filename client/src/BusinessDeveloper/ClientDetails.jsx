@@ -1,0 +1,1060 @@
+import React, { useEffect, useState,useRef } from "react";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Plus,
+  Search,
+  X,
+  Building,
+  Link as LinkIcon,
+  ExternalLink,
+  Copy,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import axios from "axios";
+import ReactPaginate from "react-paginate";
+import styled from "styled-components";
+import { clearUser } from "../redux/user/userSlice";
+
+const ClientDetails = () => {
+  const baseURL = `https://dmcalculator.dentalguru.software`;
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { currentUser, token } = useSelector((state) => state.user);
+  const employeeName = currentUser?.name;
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [formData, setFormData] = useState({
+    client_name: "",
+    client_organization: "",
+    email: "",
+    phone: "",
+    address: "",
+    dg_employee: employeeName,
+  });
+  console.log(selectedClient);
+
+  // Generate Link State
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [generating, setGenerating] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [getClients, setGetClients] = useState([]);
+  const [keyword, setKeyword] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const clientPerPage = 3;
+  const [isEditing, setIsEditing] = useState(false);
+    const detailRef = useRef(null);
+
+  const handleClose = () => {
+    setShowModal(false);
+    setFormData({
+      client_name: "",
+      client_organization: "",
+      email: "",
+      phone: "",
+      address: "",
+      dg_employee: employeeName,
+    });
+  };
+
+  // const handleShow = () => setShowModal(true);
+  const handleShow = () => {
+    setSelectedClient(null);
+    setFormData({
+      client_name: "",
+      client_organization: "",
+      email: "",
+      phone: "",
+      address: "",
+      dg_employee: employeeName,
+    });
+    setIsEditing(false);
+    setShowModal(true);
+  };
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      console.log("Submitting form data:", formData);
+      let response;
+
+      if (isEditing && selectedClient) {
+        response = await axios.put(
+          `${baseURL}/auth/api/calculator/updateClientDetails/${selectedClient.id}`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log(response.data);
+      } else {
+        response = await axios.post(
+          `${baseURL}/auth/api/calculator/insertClientDetails`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log(response.data);
+      }
+
+      console.log("API response:", response.data);
+
+      if (response.data.status === "Success") {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: isEditing
+            ? "Client updated successfully!"
+            : "Client added successfully!",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        }).then(() => {
+          setShowModal(false);
+          getAllClients();
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            response.data.message || "Failed to save client. Please try again.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving client:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Status:", error.response.status);
+        Swal.fire({
+          icon: "error",
+          title: `Error ${error.response.status}`,
+          text:
+            error.response.data.message ||
+            "Failed to save client. Please try again.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to save client. Please try again.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   try {
+  //     const response = await axios.post(
+  //       `${baseURL}/auth/api/calculator/insertClientDetails`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     if (response.data.status === "Success") {
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Success",
+  //         text: "Client added successfully!",
+  //       }).then(() => {
+  //         setFormData({
+  //           client_name: "",
+  //           client_organization: "",
+  //           email: "",
+  //           phone: "",
+  //           address: "",
+  //           dg_employee: employeeName,
+  //         });
+  //         setShowModal(false);
+  //         getAllClients();
+  //       });
+  //       setLoading(false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding client:", error);
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: "Failed to add client. Please try again.",
+  //     });
+  //     setLoading(false);
+  //     return;
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  //   handleClose();
+  // };
+
+  // All BD client data
+
+  const handleDeleteClient = async (clientId) => {
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this client permanently?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const response = await axios.delete(
+        ` ${baseURL}/auth/api/calculator/deleteClientById/${clientId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.status === "Success") {
+        Swal.fire({
+          icon: "success",
+          title: "Deleted!",
+          text: "Client deleted successfully.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+
+        // Refresh client list
+        getAllClients();
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Failed!",
+          text: response.data.message || "Unable to delete client.",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Something went wrong while deleting client.",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    }
+  };
+
+  const getAllClients = async () => {
+    try {
+      const response = await axios.get(
+        `${baseURL}/auth/api/calculator/getClientDetails`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setGetClients(response.data.data);
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch clients. Please try again.",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      if (error.response && error.response.status === 401) {
+        // Token is invalid or expired
+        Swal.fire({
+          title: "Session Expired",
+          text: "Please login again.",
+          icon: "warning",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        }).then(() => {
+          dispatch(clearUser());
+          localStorage.removeItem("token");
+          navigate("/");
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    getAllClients();
+  }, []);
+
+  //   console.log("getClients:", getClients);
+
+  const filteredItems = getClients.filter((row) => {
+    const matchesKeyword =
+      (row?.client_name &&
+        row.client_name.toLowerCase().includes(keyword.trim().toLowerCase())) ||
+      (row?.dg_employee &&
+        row.dg_employee.toLowerCase().includes(keyword.trim().toLowerCase())) ||
+      (row?.client_organization &&
+        row.client_organization
+          .toLowerCase()
+          .includes(keyword.trim().toLowerCase())) ||
+      (row?.phone &&
+        row.phone.toLowerCase().includes(keyword.trim().toLowerCase()));
+
+    return matchesKeyword;
+  });
+
+  const totalPages = Math.ceil(filteredItems.length / clientPerPage);
+
+  const filterPagination = () => {
+    const startIndex = currentPage * clientPerPage;
+    const endIndex = startIndex + clientPerPage;
+    return filteredItems?.slice(startIndex, endIndex);
+  };
+
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected);
+  };
+
+  const showApiData = filterPagination();
+
+  const handleCreateProposal = () => {
+    const proposalId = Date.now(); // generates unique number based on current time
+    navigate(`/BD/AddService/${selectedClient.id}/${proposalId}`);
+  };
+
+  function toSqlDateTimeIST(date = new Date()) {
+    const pad = (n) => String(n).padStart(2, "0");
+    // Convert current time to IST (UTC+5:30)
+    const istOffsetMin = 330;
+    const utcMs = date.getTime() + date.getTimezoneOffset() * 60000;
+    const ist = new Date(utcMs + istOffsetMin * 60000);
+    return (
+      `${ist.getFullYear()}-${pad(ist.getMonth() + 1)}-${pad(ist.getDate())} ` +
+      `${pad(ist.getHours())}:${pad(ist.getMinutes())}:${pad(ist.getSeconds())}`
+    );
+  }
+
+  // Try backend create (recommended), else fallback to client-side
+  const handleGeneratePublicLink = async () => {
+    if (!selectedClient) {
+      Swal.fire({ icon: "warning", title: "Select a client first" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const expiresAt = toSqlDateTimeIST(
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      );
+
+      const payload = {
+        client_id: selectedClient.id,
+        created_by: employeeName,
+        expires_at: expiresAt,
+        is_active: 1,
+      };
+
+      console.log(payload);
+
+      const resp = await axios.post(
+        `${baseURL}/auth/api/calculator/generateClientLink`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const { status, data, message } = resp?.data || {};
+      if (status !== "Success" || !data?.slug) {
+        throw new Error(message || "Failed to generate link");
+      }
+
+      // 🧭 Build a safe, hash-aware public URL
+      const FRONTEND_ORIGIN = window.location.origin;
+      const useHash =
+        !!window.location.hash || window.location.href.includes("#/");
+
+      let finalUrl;
+      try {
+        const u = new URL(data.url);
+        const path = u.pathname + u.search + u.hash;
+
+        // ensure /public/r/... path hi ho
+        const cleanPath = path.startsWith("/public/")
+          ? path
+          : `/public/r/${data.slug}`;
+
+        finalUrl = `${FRONTEND_ORIGIN}${useHash ? "/#" : ""}${cleanPath}`;
+      } catch {
+        // parsing fail ho to slug se construct
+        finalUrl = `${FRONTEND_ORIGIN}${useHash ? "/#" : ""}/public/r/${
+          data.slug
+        }`;
+      }
+
+      setGeneratedLink(finalUrl);
+      setShowLinkModal(true);
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ icon: "error", title: "Failed to generate link" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      Swal.fire({
+        icon: "success",
+        title: "Link copied!",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    } catch {
+      Swal.fire({ icon: "error", title: "Copy failed" });
+    }
+  };
+  const handleClientClick = (client) => {
+    setSelectedClient(client);
+
+    // scroll only on mobile/tablet
+    if (window.innerWidth < 1024) {
+      setTimeout(() => {
+        if (detailRef.current) {
+          detailRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }, 100);
+    }
+  };
+
+  return (
+    <>
+      <div className="p-4 md:p-6 space-y-6 bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h2 className="text-3xl font-semibold text-gray-800">
+            Client Details
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="search"
+                value={keyword}
+                placeholder="Search clients..."
+                className="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setCurrentPage(0);
+                }}
+              />
+            </div>
+            <button
+              onClick={handleShow}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md transition"
+            >
+              <Plus className="w-4 h-4" />
+              Add Client
+            </button>
+          </div>
+        </div>
+
+        {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6"> */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="lg:p-6 sm:p-4 p-2">
+                <h3 className="text-lg font-semibold mb-4">All Clients</h3>
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="loading-overlay">
+                      <div className="spinner"></div>
+                    </div>
+                  ) : (
+                    <>
+                      {showApiData && showApiData.length > 0 ? (
+                        showApiData?.map((client) => (
+                          <div
+                            key={client.id}
+                            className={`lg:p-6 sm:p-4 p-1 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                              selectedClient?.id === client.id
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-gray-200"
+                            }`}
+                             onClick={() => handleClientClick(client)}
+                          >
+                                       <div className="flex justify-between items-start">
+                                                       <div className="flex-1">
+                                                         <div className="flex items-center gap-3 mb-2">
+                                                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                                             <User className="w-5 h-5 text-white" />
+                                                           </div>
+                                                           <div>
+                                                             <h4 className="font-semibold text-gray-900">
+                                                               {client.client_organization}
+                                                             </h4>
+                                                             <p className="text-sm text-gray-600">
+                                                               {client.client_name}
+                                                             </p>
+                                                           </div>
+                                                         </div>
+                                                         {/* <div className="grid grid-cols-2 gap-4 text-sm text-gray-600"> */}
+                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 break-words">
+                                                             {client.email ? (
+                                                           <div className="flex items-center gap-2">
+                                                               <>
+                                                                 <Mail className="w-4 h-4" />
+                                                                 {client.email}
+                                                               </>
+                                                           </div>
+                                                             ) : null}
+                                                           <div className="flex items-center gap-2 break-words">
+                                                             <Phone className="w-4 h-4" />
+                                                             {client.phone}
+                                                           </div>
+                                                              {client.address ? (
+                                                           <div className="flex items-center gap-2 break-words">
+                                                             <MapPin className="w-4 h-4" />
+                                                             {client.address}
+                                                           </div>
+                                                             ) : null}
+                                                           <div className="flex items-center gap-2 break-words">
+                                                             <Calendar className="w-4 h-4" />
+                                                             Employee : {client.dg_employee}
+                                                           </div>
+                         
+                                                          
+                                                         </div>
+                                                         <div className="flex items-center gap-2 break-words mt-3">
+                            <button
+                                                             onClick={(e) => {
+                                                               e.stopPropagation(); // prevent card onClick
+                                                               setSelectedClient(client);
+                                                               setFormData({
+                                                                 client_name: client.client_name,
+                                                                 client_organization:
+                                                                   client.client_organization,
+                                                                 email: client.email,
+                                                                 phone: client.phone,
+                                                                 address: client.address,
+                                                                 dg_employee: client.dg_employee,
+                                                               });
+                                                               setIsEditing(true);
+                                                               setShowModal(true);
+                                                             }}
+                                                             className="lg:w-96 sm:w-80 w-48 inline-block px-2 py-2 rounded-full text-sm font-semibold transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-500 to-blue-700 text-white shadow-lg shadow-blue-500/25"
+                                                           >
+                                                             Edit
+                                                           </button>
+                                              
+                                                           {/* <button
+                                                             className="w-full inline-block px-2 py-2 rounded-full text-sm font-semibold transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-red-500 to-red-700 text-white shadow-lg shadow-red-500/25"
+                                                             onClick={() =>
+                                                               handleDeleteClient(client.id)
+                                                             }
+                                                           >
+                                                             Delete
+                                                           </button> */}
+                         </div>
+                                                       </div>
+                                                     </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-6">
+                          <p>No clients found</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+              <PaginationContainer>
+                <ReactPaginate
+                  previousLabel={"Previous"}
+                  nextLabel={"Next"}
+                  breakLabel={"..."}
+                  pageCount={totalPages}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={5}
+                  onPageChange={handlePageChange}
+                  containerClassName={"pagination"}
+                  activeClassName={"active"}
+                  forcePage={currentPage}
+                />
+              </PaginationContainer>
+            </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            {selectedClient ? (
+              <>
+              
+                  <div ref={detailRef} className="block lg:hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Client Profile</h3>
+                  <div className="text-center mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="w-10 h-10 text-white" />
+                    </div>
+                 {selectedClient.client_organization ? (
+                    <h4 className="font-bold text-xl text-gray-900">
+                      {selectedClient.client_organization}
+                    </h4>
+                     ) : null}
+
+                    <p className="text-gray-600">
+                      {selectedClient.client_name}
+                    </p>
+                  </div>
+                          <div className="space-y-4">
+                     {selectedClient.email ? (
+                                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <Mail className="w-5 h-5 text-gray-500" />
+                                        <span className="text-sm">{selectedClient.email}</span>
+                                      </div>
+                                       ) : null}
+                                       
+                                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <Phone className="w-5 h-5 text-gray-500" />
+                                        <span className="text-sm">{selectedClient.phone}</span>
+                                      </div>
+                                         {selectedClient.address ? (
+                                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <MapPin className="w-5 h-5 text-gray-500" />
+                                        <span className="text-sm">{selectedClient.address}</span>
+                                      </div>
+                                       ) : null}
+                                    </div>
+                  <div className="mt-6 space-y-2">
+                    <button
+                      onClick={handleCreateProposal}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Create Proposal
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleGeneratePublicLink();
+                      }}
+                      disabled={!selectedClient || generating}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-lg hover:from-sky-500 hover:to-blue-600 transition-colors shadow-md disabled:opacity-60"
+                    >
+                      {generating ? "Generating..." : "Generate Link"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/BD/client/service/history/${selectedClient.id}`
+                        )
+                      }
+                      className="w-full px-4 py-2 bg-white text-blue-600 dark:text-sky-400 rounded-lg hover:bg-sky-300 transition-colors border-2 border-dashed border-sky-300 hover:text-white"
+                    >
+                      Proposal History
+                    </button>
+                  </div>
+                </div>
+              </div>
+                    </div>
+                     <div className="hidden lg:block lg:col-span-1">
+                       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">Client Profile</h3>
+                  <div className="text-center mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="w-10 h-10 text-white" />
+                    </div>
+                    <h4 className="font-bold text-xl text-gray-900">
+                      {selectedClient.client_organization}
+                    </h4>
+                    <p className="text-gray-600">
+                      {selectedClient.client_name}
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Mail className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm">{selectedClient.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Phone className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm">{selectedClient.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <MapPin className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm">{selectedClient.address}</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 space-y-2">
+                    <button
+                      onClick={handleCreateProposal}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Create Proposal
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleGeneratePublicLink();
+                      }}
+                      disabled={!selectedClient || generating}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-sky-400 to-blue-500 text-white rounded-lg hover:from-sky-500 hover:to-blue-600 transition-colors shadow-md disabled:opacity-60"
+                    >
+                      {generating ? "Generating..." : "Generate Link"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/BD/client/service/history/${selectedClient.id}`
+                        )
+                      }
+                      className="w-full px-4 py-2 bg-white text-blue-600 dark:text-sky-400 rounded-lg hover:bg-sky-300 transition-colors border-2 border-dashed border-sky-300 hover:text-white"
+                    >
+                      Proposal History
+                    </button>
+                  </div>
+                </div>
+              </div>
+                     </div>
+              </>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="text-center text-gray-500">
+                  <User className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Select a client to view details</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity"
+              onClick={handleClose}
+            />
+
+            {/* Modal */}
+            <div className="relative bg-white w-full max-w-md rounded-xl shadow-2xl transform transition-all animate-in fade-in-0 zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Add New Client
+                  </h2>
+                </div>
+                <button
+                  onClick={handleClose}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                {/* Client Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4 inline mr-2" />
+                    Client Name
+                  </label>
+                  <input
+                    type="text"
+                    name="client_name"
+                    value={formData.client_name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter client name"
+                    required
+                  />
+                </div>
+
+                {/* Organization */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Building className="w-4 h-4 inline mr-2" />
+                    Organization
+                  </label>
+                  <input
+                    type="text"
+                    name="client_organization"
+                    value={formData.client_organization}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter organization name"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Mail className="w-4 h-4 inline mr-2" />
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Phone className="w-4 h-4 inline mr-2" />
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter phone number"
+                    required
+                    minLength={10}
+                    maxLength={10}
+                  />
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-2" />
+                    Address
+                  </label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
+                    placeholder="Enter full address"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                  >
+                    {loading ? "Saving..." : "Save Client"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Generate Link */}
+        {showLinkModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowLinkModal(false)}
+            />
+            <div className="relative bg-white w-full max-w-lg rounded-xl shadow-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <LinkIcon className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold">
+                    Requirement Form Link
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowLinkModal(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm text-gray-600">
+                  Share this link with the client. They can open it without
+                  login and submit their requirements.
+                </div>
+
+                <div className="p-3 rounded border bg-gray-50 break-all text-sm">
+                  {generatedLink}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <a
+                    href={generatedLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <ExternalLink className="w-4 h-4" /> Visit Link
+                  </a>
+                  <button
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+                  >
+                    <Copy className="w-4 h-4" /> Copy Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ClientDetails;
+const PaginationContainer = styled.div`
+  .pagination {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    list-style: none;
+    border-radius: 5px;
+  }
+
+  .pagination li {
+    margin: 0 5px;
+  }
+
+  .pagination li a {
+    display: block;
+    padding: 8px 16px;
+    border: 1px solid #e6ecf1;
+    color: #a73418;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 5px;
+    box-shadow: 0px 0px 1px #000;
+    font-size: 14px; /* Default font size */
+  }
+
+  .pagination li.active a {
+    background-color: #fef9c3;
+    color: #d7a548;
+    border: 1px solid #fef9c3;
+  }
+
+  .pagination li.disabled a {
+    color: #166556;
+    cursor: not-allowed;
+    background-color: #dcfce7;
+    border: 1px solid #dcfce7;
+  }
+
+  .pagination li a:hover:not(.active) {
+    background-color: #dcfce7;
+    color: #166556;
+  }
+
+  /* Responsive adjustments for smaller screens */
+  @media (max-width: 768px) {
+    .pagination {
+      padding: 5px;
+      flex-wrap: wrap;
+    }
+
+    .pagination li {
+      margin: 2px;
+    }
+
+    .pagination li a {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .pagination {
+      padding: 5px;
+    }
+
+    .pagination li {
+      margin: 2px;
+    }
+
+    .pagination li a {
+      padding: 4px 8px;
+      font-size: 10px;
+    }
+
+    /* Hide the previous and next labels for extra-small screens */
+    .pagination li:first-child a::before {
+      content: "«";
+      margin-right: 5px;
+    }
+
+    .pagination li:last-child a::after {
+      content: "»";
+      margin-left: 5px;
+    }
+  }
+`;

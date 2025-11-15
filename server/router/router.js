@@ -1,0 +1,472 @@
+const express = require("express");
+const {
+  register,
+  login,
+  forgotPassword,
+  // insertServices,
+  // getServices,
+  // updateServices,
+  insertAdsServices,
+  updateAdsServices,
+  insertClientDetails,
+  getClientDetails,
+  getClientsByEmployee,
+  addServices,
+  addCategories,
+  addEditingTypes,
+  saveCalculatorData,
+  saveAdsCampaign,
+  registerBD,
+  verifyOtpAndResetPassword,
+  saveCalculatorDataOfPlan,
+  saveCalculatorDataOfPlanDetail,
+  saveClientWithPlan,
+  addNotebyplan,
+  savePlanClientNotes,
+  saveClientIdwiseNotes,
+  assignQuotation,
+  setDoneQty,
+  incrementDoneQty,
+  reassignQuotation,
+  createTeam,
+  addMembersToTeam,
+  assignQuotationToTeam,
+  saveComplimentaryData,
+  generateClientLink,
+  submitRequirement,
+  saveNotesData,
+  saveDiscountData,
+  saveInvoiceData,
+  saveInvoiceGD,
+  saveInvoiceAdsCampaign,
+  saveInvoiceComplimentaryData,
+  saveInvoiceCalculatorData,
+  saveInvoiceNotesData,
+  saveInvoiceClientIdwiseNotes,
+  copyInvoiceByTxnId,
+  saveAdditionalData,
+  saveRemainingAmountData,
+  seoClientsDetails,
+  seoWebsiteKeyword,
+  saveDiscountSetting,
+  saveNotesbydefault,
+} = require("../controller/controller");
+const {
+  getAddServices,
+  getAddCategories,
+  getAddEditingTypes,
+  getAllServiceData,
+  getAdsServices,
+  getAllServiceDatas,
+  getCalculatorTransactions,
+  getByIDCalculatorTransactions,
+  getByIDAdsCampaignDetails,
+  getClientDetailsById,
+  getClientTxnHistory,
+  getClientServiceHistory,
+  getClientDetailsEmp,
+  getAllClientsTxnHistory,
+  getClientsTxnHistoryByEmployee,
+  getAllBD,
+  optionalServiceAmounts,
+  getPlanData,
+  getPlanDetails,
+  getPlanDetailsById,
+  getPlanDataById,
+  getPlanNotes,
+  getClientNotesbyId,
+  retrieveUser,
+  getAssignmentByTxn,
+  getAssignedQuotations,
+  getProgressByTxn,
+  getAssignedQuotationsByEmployeeName,
+  retrieveTeam,
+  retrieveTeamById,
+  getAssignmentsSummary,
+  getByIDComplimentaryData,
+  getRequirementsLink,
+  getRequirementsDetail,
+  getNoteData,
+  getByIDDiscountData,
+  getInvoiceByIdData,
+  getinInvoiceServiceHistory,
+  getAllInvoiceServiceHistory,
+  getClientServiceHistoryAssign,
+  getComplimentaryInvoiceData,
+  getInvoiceClientDetailsById,
+  getInvoiceGraphic,
+  getInvoiceAdsCampaign,
+  getInvoiceNoteData,
+  getInvoiceClientNotesbyId,
+  getAllInvoice,
+  getAdditionByIdData,
+  getRemainingAmountByIdData,
+  getSeoClientsWithKeywords,
+  getDiscountSetting,
+} = require("../controller/getController");
+const {
+  deleteService,
+  deleteCategory,
+  deleteEditingType,
+  deleteAdsServices,
+  deleteAdsCampaignDetails,
+  deleteAdsCampaignEntryById,
+  deleteGraphicEntryById,
+  deleteClientById,
+  deleteQuoatationById,
+  deletePlanNameDetail,
+  deletePlanNotesbyid,
+  deletePlanDataByService,
+  deletePlanbyChangeNotes,
+  deleteClientAllPlanData,
+  deletePlanClientNotes,
+  removeMemberFromTeam,
+  deleteTeam,
+  deleteComplimenatryById,
+  deleteNoteById,
+  deleteRequirementsBundle,
+  deleteDiscountById,
+  deleteInvoiceById,
+  deleteAllInvoiceServiceHistory,
+  deleteInvoiceAdsCampaignEntryById,
+  deleteInvoiceNoteById,
+  deleteInvoiceClientNotes,
+  deleteInvoiceComplimenatryById,
+  deleteAdditionalById,
+  deleteRemainingAmountById,
+  deleteSeoClient,
+  deleteSeoKeyword,
+  deleteDiscountSettingById,
+} = require("../controller/deleteController");
+const {
+  updateService,
+  updateCategory,
+  updateEditingType,
+  updateCalculatorDataById,
+  updateClientDetails,
+  updatePlandata,
+  updatePlanNameDetail,
+  updatePlanNotes,
+  updateServiceData,
+  updateComplimenatryDataById,
+  updateNoteDataById,
+  updateClientNoteDataById,
+  updateDiscountDataById,
+  updateInvoiceDataById,
+  updateInvoiceNoteDataById,
+  updateInvoiceClientNoteDataById,
+  updateInvoiceComplimenatryDataById,
+  updateInvoiceClientDataById,
+  updateAdditionalDataById,
+  updateRemainingDataById,
+  updateSeoClient,
+  updateSeoKeyword,
+  updateDiscountSettingDataById,
+  // reassignQuotation,
+} = require("../controller/updateController");
+
+const authenticateToken = require("../middleware/authenticateToken");
+const {
+  pagespeedReportpdf,
+  // fullSEOReport,
+} = require("../controller/seoController");
+
+const router = express.Router();
+
+router.post("/register", register);
+router.post("/registerBD", authenticateToken, registerBD);
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/verifyOTP-forgot", verifyOtpAndResetPassword);
+// router.post("/insertServices", insertServices);
+// router.get("/getServices", getServices);
+// router.put("/updateServices/:id", updateServices);
+router.post("/insertAdsServices", insertAdsServices);
+router.put("/updateAdsServices/:id", updateAdsServices);
+router.post("/insertClientDetails", insertClientDetails);
+router.get("/getClientDetails",authenticateToken, getClientDetails);
+router.get("/getClientsByEmployee/:employee", getClientsByEmployee);
+router.post("/addServices", addServices);
+router.post("/addCategories", addCategories);
+router.post("/addEditingTypes", addEditingTypes);
+router.post("/saveCalculatorData", saveCalculatorData);
+router.post("/saveAdsCampaign", saveAdsCampaign);
+router.post("/saveCalculatorDataofplan", saveCalculatorDataOfPlan);
+router.post("/saveClientWithPlan", saveClientWithPlan);
+router.post("/addNotebyplan", addNotebyplan);
+router.post("/savePlanClientNotes", savePlanClientNotes);
+router.post("/saveClientIdwiseNotes", saveClientIdwiseNotes);
+router.post("/assignQuotation", assignQuotation);
+router.post("/createTeam", createTeam);
+router.post("/addMembersToTeam/:id/members", addMembersToTeam);
+router.post("/assignQuotationToTeam", assignQuotationToTeam);
+
+router.post("/saveComplimentaryData", saveComplimentaryData);
+
+router.post("/generateClientLink", generateClientLink);
+router.post("/submitRequirement", submitRequirement);
+router.post("/saveNotesData", saveNotesData);
+router.post("/saveNotesbydefault", saveNotesbydefault);
+router.post("/saveDiscountData", saveDiscountData);
+router.post("/saveInvoiceData", saveInvoiceData);
+router.post("/saveInvoiceGD", saveInvoiceGD);
+router.post("/saveInvoiceAdsCampaign", saveInvoiceAdsCampaign);
+router.post("/saveInvoiceComplimentaryData", saveInvoiceComplimentaryData);
+router.post("/saveInvoiceCalculatorData", saveInvoiceCalculatorData);
+router.post("/saveInvoiceNotesData", saveInvoiceNotesData);
+router.post("/saveInvoiceClientIdwiseNotes", saveInvoiceClientIdwiseNotes);
+router.post("/copyInvoiceByTxnId/:txn_id", copyInvoiceByTxnId);
+router.post("/saveAdditionalData", saveAdditionalData);
+router.post("/saveRemainingAmountData", saveRemainingAmountData);
+router.post("/saveCalculatorDataofplanDetail", saveCalculatorDataOfPlanDetail);
+router.post("/seoClientsDetails", seoClientsDetails);
+router.post("/seoWebsiteKeyword/:client_id", seoWebsiteKeyword);
+router.post("/saveDiscountSetting", saveDiscountSetting);
+
+
+// ---->  Get all routes START <----
+router.get("/getAddServices", authenticateToken, getAddServices);
+router.get("/categories/:service_id", getAddCategories);
+router.get("/getAddEditingTypes/:service/:category", getAddEditingTypes);
+router.get("/api/services/details/all", authenticateToken, getAllServiceData);
+router.get("/getAdsServices", authenticateToken, getAdsServices);
+router.get("/services/category/editing", getAllServiceDatas);
+router.get("/getCalculatorTransactions", getCalculatorTransactions);
+router.get(
+  "/getByIDCalculatorTransactions/:txn_id/:client_id",
+  authenticateToken,
+  getByIDCalculatorTransactions
+);
+
+router.get(
+  "/getByIDAdsCampaignDetails/:txn_id/:client_id",
+  authenticateToken,
+  getByIDAdsCampaignDetails
+);
+router.get(
+  "/getClientDetailsById/:id",
+  authenticateToken,
+  getClientDetailsById
+);
+router.get(
+  "/getClientTxnHistory/:client_id",
+  authenticateToken,
+  getClientTxnHistory
+);
+router.get(
+  "/getClientServiceHistory/:client_id/:txn_id",
+  authenticateToken,
+  getClientServiceHistory
+);
+
+router.get(
+  "/getClientServiceHistoryAssign/:client_id/:txn_id",
+  authenticateToken,
+  getClientServiceHistoryAssign
+);
+
+router.get(
+  "/getAllClientsTxnHistory",
+  authenticateToken,
+  getAllClientsTxnHistory
+);
+router.get("/getAllBD",authenticateToken, getAllBD);
+
+router.get("/getAllPlanData",authenticateToken, getPlanData);
+router.get("/getAllPlanDataById/:id", getPlanDataById);
+router.get("/getAllPlanDetails", authenticateToken, getPlanDetails);
+router.get("/getAllPlanDetailsById/:id",authenticateToken , getPlanDetailsById);
+router.get("/getPlanNotes",authenticateToken, getPlanNotes);
+router.get("/getClientNotesbyId/:client_id/:txn_id",authenticateToken, getClientNotesbyId);
+router.get(
+  "/getByIDComplimentaryData/:txn_id/:client_id",
+  authenticateToken,
+  getByIDComplimentaryData
+);
+
+router.get(
+  "/getinInvoiceServiceHistory/:client_id/:txn_id",
+  authenticateToken,
+  getinInvoiceServiceHistory
+);
+router.get(
+  "/getAllInvoiceServiceHistory/:client_id/:txn_id",
+  authenticateToken,
+  getAllInvoiceServiceHistory
+);
+router.get(
+  "/getComplimentaryInvoiceData/:txn_id/:client_id",
+  authenticateToken,
+  getComplimentaryInvoiceData
+);
+// >>>>>>>>>> BD GET API's <<<<<<<<<<<
+router.get("/getClientDetailsEmp/:dg_employee", getClientDetailsEmp);
+
+router.get(
+  "/getClientsTxnByEmployee/:dg_employee",
+  authenticateToken,
+  getClientsTxnHistoryByEmployee
+);
+//NEW work
+router.get("/retrieveUser",authenticateToken, retrieveUser);
+router.get("/getAssignmentByTxn/:txn_id", getAssignmentByTxn);
+router.get("/getAssignedQuotations",authenticateToken, getAssignedQuotations);
+router.get(
+  "/assigned-quotations/by-employee/:employee_name",authenticateToken,
+  getAssignedQuotationsByEmployeeName
+);
+router.get("/progress/by-txn/:txn_id", getProgressByTxn);
+router.get("/retrieveTeam", retrieveTeam);
+router.get("/retrieveTeamById/:id", retrieveTeamById);
+router.get("/getAssignmentsSummary/:txn_id", getAssignmentsSummary);
+router.get("/requirements",authenticateToken, getRequirementsLink);
+router.get("/getRequirementsDetail/:linkId", getRequirementsDetail);
+router.get("/getNoteData",authenticateToken, getNoteData);
+router.get(
+  "/getByIDDiscountData/:client_id/:txn_id",
+  authenticateToken,
+  getByIDDiscountData
+);
+router.get(
+  "/getInvoiceByIdData/:client_id/:txn_id",
+  authenticateToken,
+  getInvoiceByIdData
+);
+router.get(
+  "/getInvoiceClientDetailsById/:client_id/:txn_id",
+  authenticateToken,
+  getInvoiceClientDetailsById
+  
+);
+router.get(
+  "/getInvoiceGraphic/:txn_id/:client_id",
+  authenticateToken,
+  getInvoiceGraphic
+);
+router.get(
+  "/getInvoiceAdsCampaign/:txn_id/:client_id",
+  authenticateToken,
+  getInvoiceAdsCampaign
+);
+router.get("/getInvoiceNoteData",authenticateToken, getInvoiceNoteData);
+router.get(
+  "/getInvoiceClientNotesbyId/:client_id/:txn_id",
+  getInvoiceClientNotesbyId
+);
+router.get("/getAllInvoice",authenticateToken, getAllInvoice);
+router.get("/getAdditionByIdData/:client_id/:txn_id", getAdditionByIdData);
+router.get(
+  "/getRemainingAmountByIdData/:client_id/:txn_id",
+  getRemainingAmountByIdData
+);
+router.get("/getSeoClientsWithKeywords",authenticateToken, getSeoClientsWithKeywords);
+router.get("/getDiscountSetting",authenticateToken, getDiscountSetting);
+
+// ---->  Get all routes END <----
+
+// ---->  DELETE all routes START <----
+router.delete("/deleteService/:service_id", deleteService);
+router.delete("/deleteCategory/:category_id", deleteCategory);
+router.delete("/deleteEditingType/:editing_type_id", deleteEditingType);
+router.delete("/ads/delete/:id", deleteAdsServices);
+router.delete(
+  "/deleteAdsCampaignDetails/:txn_id/:client_id",
+  deleteAdsCampaignDetails
+);
+router.delete("/deleteAdsCampaignEntryById/:id", deleteAdsCampaignEntryById);
+router.delete("/deleteGraphicEntryById/:id", deleteGraphicEntryById);
+
+router.delete("/deleteClientById/:id", deleteClientById);
+
+router.delete("/deleteQuotationById/:txn_id", deleteQuoatationById);
+
+router.delete("/deletePlanNameDetail/:id", deletePlanNameDetail);
+
+router.delete("/deletePlanNotesbyid/:id", deletePlanNotesbyid);
+
+router.delete("/deletePlanDataByService/:id", deletePlanDataByService);
+
+router.delete("/deletePlanbyChangeNotes/:txn_id", deletePlanbyChangeNotes);
+
+router.delete("/deleteClientAllPlanData/:txn_id", deleteClientAllPlanData);
+
+router.delete("/deletePlanClientNotes/:id", deletePlanClientNotes);
+
+router.delete(
+  "/removeMemberFromTeam/:teamId/members/:memberId",
+  removeMemberFromTeam
+);
+
+router.delete("/deleteTeam/:id", deleteTeam);
+
+router.delete("/deleteComplimenatryById/:id", deleteComplimenatryById);
+router.delete("/deleteNoteById/:id", deleteNoteById);
+router.delete("/deleteDiscountById/:id", deleteDiscountById);
+router.delete("/deleteInvoiceById/:id", deleteInvoiceById);
+router.delete(
+  "/deleteAllInvoiceServiceHistory/:client_id/:txn_id",
+  deleteAllInvoiceServiceHistory
+);
+router.delete(
+  "/deleteInvoiceAdsCampaignEntryById/:id",
+  deleteInvoiceAdsCampaignEntryById
+);
+router.delete("/deleteInvoiceNoteById/:id", deleteInvoiceNoteById);
+router.delete("/deleteInvoiceClientNotes/:id", deleteInvoiceClientNotes);
+router.delete(
+  "/deleteInvoiceComplimenatryById/:id",
+  deleteInvoiceComplimenatryById
+);
+router.delete("/deleteAdditionalById/:id", deleteAdditionalById);
+router.delete("/deleteRemainingAmountById/:id", deleteRemainingAmountById);
+router.delete("/deleteDiscountSettingById/:id", deleteDiscountSettingById);
+
+router.delete("/deleteRequirementsBundle/:linkId", deleteRequirementsBundle);
+router.delete("/deleteSeoClient/:clientId", deleteSeoClient);
+router.delete("/deleteSeoKeyword/:keywordId", deleteSeoKeyword);
+
+// ---->  DELETE all routes END <----
+
+// ---->  UPDATE all routes START <----
+router.put("/updateService/:service_id", updateService);
+router.put("/updateCategory/:category_id", updateCategory);
+router.put("/updateEditingType/:editing_type_id", updateEditingType);
+router.put("/updateGraphicEntryById/:id", updateCalculatorDataById);
+router.put("/updateClientDetails/:id", updateClientDetails);
+router.put("/updatePlanData/:id", updatePlandata);
+router.put("/updatePlanName/:id", updatePlanNameDetail);
+router.put("/updatePlanNotes/:id", updatePlanNotes);
+router.put("/updateServiceData/:editing_type_id", updateServiceData);
+router.put("/reassignQuotation", reassignQuotation);
+router.put("/updateComplimenatryDataById/:id", updateComplimenatryDataById);
+router.put("/updateNoteDataById/:id", updateNoteDataById);
+router.put("/updateClientNoteDataById/:id", updateClientNoteDataById);
+router.put("/updateDiscountDataById/:id", updateDiscountDataById);
+router.put("/updateInvoiceDataById/:id", updateInvoiceDataById);
+router.put("/updateInvoiceNoteDataById/:id", updateInvoiceNoteDataById);
+router.put(
+  "/updateInvoiceClientNoteDataById/:id",
+  updateInvoiceClientNoteDataById
+);
+router.put(
+  "/updateInvoiceComplimenatryDataById/:id",
+  updateInvoiceComplimenatryDataById
+);
+router.put("/updateInvoiceClientDataById/:id", updateInvoiceClientDataById);
+router.put("/updateAdditionalDataById/:id", updateAdditionalDataById);
+router.put("/updateRemainingDataById/:id", updateRemainingDataById);
+router.put("/updateDiscountSettingDataById/:id", updateDiscountSettingDataById);
+// router.put("/reassignQuotation", reassignQuotation);
+router.put("/updateSeoClient/:clientId", updateSeoClient);
+router.put("/updateSeoKeyword/:keywordId", updateSeoKeyword);
+// ---->  UPDATE all routes END <----
+
+router.get("/optional-service-amounts", optionalServiceAmounts);
+
+router.patch("/progress/set-done", setDoneQty);
+router.patch("/progress/increment", incrementDoneQty);
+
+router.get("/pagespeedReportpdf", pagespeedReportpdf);
+// router.get("/pagespeedReportpdf", fullSEOReport);
+
+module.exports = router;
